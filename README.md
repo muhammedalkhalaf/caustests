@@ -58,8 +58,6 @@ plot(result6)
 
 ## Author
 
-Dr. Merwan Roudane (merwanroudane920@gmail.com)
-
 ## License
 
 GPL-3

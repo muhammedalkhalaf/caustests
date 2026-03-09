@@ -79,7 +79,7 @@ Useful links:
 
 Other contributors:
 \itemize{
-  \item Merwan Roudane (Original Stata implementation) [contributor]
+  \item
 }
 
 }
