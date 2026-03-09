@@ -1,0 +1,33 @@
+Package: caustests
+Type: Package
+Title: Multiple Granger Causality Tests
+Version: 1.0.2
+Authors@R: c(
+    person("Muhammad", "Alkhalaf", 
+           email = "muhammedalkhalaf@gmail.com",
+           role = c("aut", "cre", "cph"),
+           comment = c(ORCID = "0009-0002-2677-9246")),
+    person("Merwan", "Roudane",
+           role = "ctb",
+           comment = "Original Stata implementation"))
+Description: Comprehensive suite of Granger causality tests including standard
+    Toda-Yamamoto (1995) <doi:10.1016/0304-4076(94)01616-8>, Fourier-based tests
+    with single frequency (Enders and Jones, 2016) 
+    <doi:10.1515/snde-2014-0101> and cumulative frequencies (Nazlioglu et al., 
+    2019) <doi:10.1080/1540496X.2018.1434072>, as well as quantile causality 
+    tests (Cai et al., 2023) <doi:10.1016/j.frl.2023.104327> and Bootstrap 
+    Fourier Granger Causality in Quantiles (Cheng et al., 2021) 
+    <doi:10.1007/s12076-020-00263-0>. All tests include bootstrap inference 
+    for robust p-values.
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Depends: R (>= 3.5.0)
+Imports:
+    stats,
+    quantreg
+Suggests:
+    testthat (>= 3.0.0)
+RoxygenNote: 7.3.3
+URL: https://github.com/muhammedalkhalaf/caustests
+BugReports: https://github.com/muhammedalkhalaf/caustests/issues
