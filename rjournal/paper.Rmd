@@ -1,0 +1,243 @@
+---
+title: "R Packages for Cointegration Testing with Structural Breaks, Fourier Approximations, and Causality Analysis"
+abstract: >
+  We present eight R packages implementing cointegration and Granger causality
+  methods absent from the R ecosystem. The cointsmall package provides
+  small-sample cointegration tests following Trinh (2022). The xtcadfcoint and
+  xtbreakcoint packages implement panel cointegration tests with structural
+  breaks and common factors. The hatemicoint and makicoint packages provide
+  regime-shift cointegration tests with unknown break dates. The xtdhcoint
+  package implements Durbin--Hausman panel cointegration tests. The fcoint
+  package offers four Fourier-based cointegration tests. The caustests package
+  provides a suite of Granger causality tests including Toda--Yamamoto, Fourier,
+  quantile, and bootstrap variants. Together, these packages fill important gaps
+  in the R cointegration toolkit, covering small-sample methods, structural
+  breaks, cross-sectional dependence, Fourier approximations, and advanced
+  causality testing. All packages are open-source under the GPL-3 license.
+author:
+  - name: Muhammad Abdullah Alkhalaf
+    affiliation: Rufyq Elngeh for Academic and Business Services
+    address: Riyadh, Saudi Arabia
+    orcid: 0009-0002-2677-9246
+    email: muhammedalkhalaf@gmail.com
+type: package
+output:
+  rjtools::rjournal_article:
+    self_contained: yes
+    toc: no
+bibliography: paper.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE, comment = "#>")
+```
+
+# Introduction
+
+Cointegration testing is central to empirical macroeconomics and finance. The
+classical Engle--Granger and Johansen tests, available in the `urca` package
+\citep{Pfaff2008}, assume known break dates (or none), large samples, and
+cross-sectional independence in panel settings. Several important advances
+address these limitations:
+
+- **Small-sample cointegration** tests valid with as few as 12 observations \citep{Trinh2022}.
+- **Panel cointegration** with structural breaks and common factors \citep{Banerjee2015, Banerjee2024}.
+- **Regime-shift cointegration** with unknown break dates \citep{HatemiJ2008, Maki2012}.
+- **Durbin--Hausman panel tests** robust to cross-sectional dependence \citep{Westerlund2008}.
+- **Fourier-based cointegration** tests capturing smooth structural change \citep{Banerjee2017fadl, Tsong2016}.
+- **Advanced Granger causality** tests including Fourier, quantile, and bootstrap variants \citep{TodaYamamoto1995, Enders2016, Cai2023, Cheng2021}.
+
+This article introduces eight R packages addressing these gaps.
+
+# The cointsmall package
+
+The `cointsmall` package implements the \citet{Trinh2022} cointegration test
+designed for very small samples (as few as 12 observations) with up to two
+endogenous structural breaks.
+
+```{r cointsmall-example}
+library(cointsmall)
+
+# Simulate a short cointegrated series
+set.seed(42)
+n <- 30
+x <- cumsum(rnorm(n))
+y <- 0.8 * x + rnorm(n, 0, 0.3)
+
+# Small-sample cointegration test with structural breaks
+result <- cointsmall(y, x, breaks = 2, model = "cs",
+                     criterion = "adf", trim = 0.15)
+summary(result)
+```
+
+# The xtcadfcoint package
+
+The `xtcadfcoint` package implements the \citet{Banerjee2024} panel cointegration
+test with structural instabilities using cross-sectionally augmented Dickey--Fuller
+regressions and Common Correlated Effects estimation.
+
+```{r xtcadfcoint-example}
+library(xtcadfcoint)
+
+# Simulate panel data
+set.seed(123)
+N <- 15; T_obs <- 50
+panel_data <- data.frame(
+  country = rep(1:N, each = T_obs),
+  year = rep(1:T_obs, N),
+  y = unlist(lapply(1:N, function(i) {
+    x <- cumsum(rnorm(T_obs))
+    0.5 * x + rnorm(T_obs, 0, 0.3)
+  })),
+  x1 = unlist(lapply(1:N, function(i) cumsum(rnorm(T_obs)))),
+  x2 = unlist(lapply(1:N, function(i) cumsum(rnorm(T_obs))))
+)
+
+result <- xtcadfcoint(y ~ x1 + x2, data = panel_data,
+                      id = "country", time = "year",
+                      model = 1, breaks = 1)
+summary(result)
+```
+
+# The xtbreakcoint package
+
+The `xtbreakcoint` package implements panel cointegration with structural breaks
+and cross-section dependence following \citet{Banerjee2015}, with iterative
+factor-break estimation and the \citet{BaiNg2004} MQ test.
+
+```{r xtbreakcoint-example}
+library(xtbreakcoint)
+
+result <- xtbreakcoint(y ~ x1 + x2, data = panel_data,
+                       id = "country", time = "year",
+                       model = "trendshift", max_factors = 5)
+summary(result)
+```
+
+# The hatemicoint package
+
+The `hatemicoint` package implements the \citet{HatemiJ2008} cointegration test
+with two unknown regime shifts, providing ADF*, Z$_t$*, and Z$_\alpha$*
+statistics with endogenous break dates.
+
+```{r hatemicoint-example}
+library(hatemicoint)
+
+set.seed(456)
+n <- 150
+x <- cumsum(rnorm(n))
+y <- 0.5 * x + rnorm(n, 0, 0.4)
+
+result <- hatemicoint(y, x, maxlags = 8,
+                      lag_selection = "aic", trimming = 0.15)
+summary(result)
+```
+
+# The xtdhcoint package
+
+The `xtdhcoint` package implements the \citet{Westerlund2008} Durbin--Hausman
+panel cointegration tests, robust to cross-sectional dependence via principal
+components. It provides group-mean (DH$_g$) and panel (DH$_p$) statistics.
+
+```{r xtdhcoint-example}
+library(xtdhcoint)
+
+result <- xtdhcoint(y ~ x1 + x2, data = panel_data,
+                    id = "country", time = "year",
+                    criterion = "bic")
+summary(result)
+```
+
+# The fcoint package
+
+The `fcoint` package provides four Fourier-based cointegration tests: FADL
+\citep{Banerjee2017fadl}, FEG, FEG2, and the \citet{Tsong2016} KPSS-type test.
+
+```{r fcoint-example}
+library(fcoint)
+
+set.seed(789)
+n <- 200
+x <- cumsum(rnorm(n))
+y <- 1.2 * x + rnorm(n, 0, 0.5)
+
+result <- fcoint(y, x, test = "fadl", max_freq = 3,
+                 criterion = "aic")
+print(result)
+```
+
+# The makicoint package
+
+The `makicoint` package implements the \citet{Maki2012} test allowing an unknown
+number of breaks (up to five) under four model specifications.
+
+```{r makicoint-example}
+library(makicoint)
+
+result <- makicoint(y, x, model = 2, max_breaks = 3,
+                    trimming = 0.10)
+summary(result)
+```
+
+# The caustests package
+
+The `caustests` package provides a comprehensive Granger causality suite:
+Toda--Yamamoto \citep{TodaYamamoto1995}, Fourier single-frequency
+\citep{Enders2016} and cumulative-frequency, quantile causality
+\citep{Cai2023}, and bootstrap Fourier Granger causality in quantiles
+\citep{Cheng2021}. The `test` argument (1--7) selects the method.
+
+```{r caustests-example}
+library(caustests)
+
+set.seed(101)
+n <- 200
+x <- cumsum(rnorm(n))
+y <- 0.3 * c(0, x[-n]) + rnorm(n)
+
+# Fourier Toda-Yamamoto (test = 2)
+result1 <- caustests(data = cbind(y, x), test = 2,
+                     pmax = 4, kmax = 3, nboot = 1000)
+summary(result1)
+
+# Quantile causality (test = 6)
+result2 <- caustests(data = cbind(y, x), test = 6,
+                     quantiles = c(0.25, 0.5, 0.75), nboot = 500)
+summary(result2)
+```
+
+# Comparison with existing implementations
+
+The `urca` package \citep{Pfaff2008} provides Engle--Granger and Johansen
+cointegration tests but does not support structural breaks, small samples, or
+Fourier approximations. The `cointReg` package offers modified OLS estimators for
+cointegrating regressions but not the specific test procedures implemented here.
+The `egcm` package provides Engle--Granger cointegration with some model selection
+but lacks break detection.
+
+Our packages differ from existing implementations in several key ways:
+
+- **cointsmall** is the only R package designed for cointegration testing with
+  very small samples (n < 30).
+- **xtcadfcoint** and **xtbreakcoint** provide panel cointegration tests with
+  both structural breaks and cross-sectional dependence --- a combination
+  unavailable in any existing R package.
+- **hatemicoint** and **makicoint** implement regime-shift cointegration with
+  endogenous break detection, methods available in Stata and GAUSS but not
+  previously in R.
+- **xtdhcoint** provides the Durbin--Hausman approach, which tests for
+  cointegration rather than no-cointegration, offering a complementary null
+  hypothesis to standard tests.
+- **fcoint** captures smooth structural change via Fourier terms without
+  requiring break date specification.
+- **caustests** consolidates seven causality tests in a single interface,
+  replacing the need for multiple packages or custom code.
+
+# Summary
+
+The eight packages presented here substantially extend R's cointegration and
+causality testing capabilities. They address gaps in small-sample inference,
+structural break detection, cross-sectional dependence, Fourier approximations,
+and advanced causality testing. All packages are available on CRAN under GPL-3.
+
+\bibliography{paper}
