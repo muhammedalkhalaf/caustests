@@ -23,113 +23,113 @@ bibliography: paper.bib
 
 # Summary
 
-We present eight R packages for cointegration testing and Granger causality analysis: `cointsmall`, `xtcadfcoint`, `xtbreakcoint`, `hatemicoint`, `xtdhcoint`, `fcoint`, `makicoint`, and `caustests`. These packages implement a wide range of cointegration tests—from small-sample methods with as few as twelve observations to large panel tests accommodating cross-sectional dependence, structural breaks, and smooth Fourier approximations—as well as comprehensive Granger causality tests including Fourier, quantile, and bootstrap variants. All packages are open-source under the GPL-3 license.
+Eight R packages implement cointegration and Granger causality methods absent from the R ecosystem: `cointsmall` for small-sample cointegration, `xtcadfcoint` and `xtbreakcoint` for panel cointegration with breaks and common factors, `hatemicoint` and `makicoint` for regime-shift cointegration, `xtdhcoint` for Durbin–Hausman panel tests, `fcoint` for Fourier-based cointegration, and `caustests` for Fourier/quantile/bootstrap causality. All are open-source under GPL-3.
 
 # Statement of Need
 
-Cointegration analysis is fundamental to empirical economics, underpinning the estimation of long-run equilibrium relationships between non-stationary variables. While the `urca` package [@Pfaff2008] provides classical Engle-Granger and Johansen tests, and the `cointReg` package offers cointegrating regression estimators, the econometric literature has advanced substantially in several directions that remain underserved in R:
-
-1. **Small-sample cointegration**: Standard tests perform poorly with fewer than 50 observations. The @Trinh2022 method handles samples as small as 12 observations with structural breaks.
-2. **Panel cointegration with breaks and common factors**: Tests by @Banerjee2015 and @Banerjee2024 accommodate structural breaks, cross-sectional dependence via common factors, and heterogeneous break locations.
-3. **Structural break cointegration**: The @HatemiJ2008 and @Maki2012 tests allow for multiple unknown regime shifts in the cointegrating relationship.
-4. **Fourier-based cointegration**: Tests by @Banerjee2017fadl and @Tsong2016 use trigonometric terms to capture smooth structural changes without specifying break dates.
-5. **Durbin-Hausman panel tests**: @Westerlund2008 provides tests robust to cross-sectional dependence through common factor extraction.
-6. **Advanced causality testing**: Beyond standard Granger tests, Fourier [@Enders2016; @Nazlioglu2019], quantile [@Cai2023], and bootstrap Fourier quantile [@Cheng2021] causality tests offer richer causal inference.
+The `urca` package [@Pfaff2008] provides classical Engle–Granger and Johansen tests, yet several important advances remain unavailable in R: small-sample methods [@Trinh2022], panel tests with breaks and common factors [@Banerjee2015; @Banerjee2024], regime-shift cointegration [@HatemiJ2008; @Maki2012], Fourier-based tests [@Banerjee2017fadl; @Tsong2016], and advanced causality tests [@Enders2016; @Cai2023; @Cheng2021]. These packages fill those gaps.
 
 # Packages
 
 ## cointsmall
 
-Implements the @Trinh2022 cointegration test for very small samples (as few as 12 observations). Applies residual-based ADF-type tests with up to two endogenous structural breaks in the constant or both constant and slope. Includes automatic lag selection via BIC and simulation-based critical values.
+Implements the @Trinh2022 cointegration test for very small samples (as few as 12 observations) with up to two endogenous structural breaks.
 
 ```r
 library(cointsmall)
-result <- cointsmall(y, x, model = "cs", max_breaks = 2)
+result <- cointsmall(y, x, breaks = 2, model = "cs",
+                     criterion = "adf", trim = 0.15)
 summary(result)
 ```
 
 ## xtcadfcoint
 
-Implements the @Banerjee2024 panel cointegration test with structural instabilities. Tests the null of no cointegration using cross-sectionally augmented Dickey-Fuller (CADF) regressions with Common Correlated Effects (CCE) estimation, allowing for structural breaks in cointegrating vectors, factor loadings, and deterministic components.
+Implements the @Banerjee2024 panel cointegration test with structural instabilities using cross-sectionally augmented Dickey–Fuller regressions and Common Correlated Effects estimation.
 
 ```r
 library(xtcadfcoint)
 result <- xtcadfcoint(y ~ x1 + x2, data = panel_data,
-                      id = "country", time = "year", model = "break")
+                      id = "country", time = "year",
+                      model = 1, breaks = 1)
 summary(result)
 ```
 
 ## xtbreakcoint
 
-Implements panel cointegration tests with structural breaks and cross-section dependence following @Banerjee2015. Provides iterative factor-break estimation, individual ADF tests on defactored residuals, standardized panel statistics, and the @BaiNg2004 MQ test for identifying common stochastic trends. Five model specifications with varying deterministic components.
+Panel cointegration with structural breaks and cross-section dependence following @Banerjee2015, with iterative factor-break estimation and the @BaiNg2004 MQ test.
 
 ```r
 library(xtbreakcoint)
 result <- xtbreakcoint(y ~ x1 + x2, data = panel_data,
                        id = "country", time = "year",
-                       model = 3, max_breaks = 2)
+                       model = "trendshift", max_factors = 5)
 summary(result)
 ```
 
 ## hatemicoint
 
-Implements the @HatemiJ2008 cointegration test with two unknown regime shifts. Provides ADF*, Zt*, and Zα* test statistics with endogenously determined break dates. Critical values are based on the simulation tables of Hatemi-J (2008).
+Implements the @HatemiJ2008 cointegration test with two unknown regime shifts, providing ADF*, Zt*, and Zα* statistics with endogenous break dates.
 
 ```r
 library(hatemicoint)
-result <- hatemicoint(y, x, model = "cs")
+result <- hatemicoint(y, x, maxlags = 8,
+                      lag_selection = "aic", trimming = 0.15)
 summary(result)
 ```
 
 ## xtdhcoint
 
-Implements the @Westerlund2008 Durbin-Hausman panel cointegration tests, which are robust to cross-sectional dependence through common factor extraction via principal components. Provides both group-mean (DHg) and panel (DHp) test statistics with automatic factor number selection.
+Implements the @Westerlund2008 Durbin–Hausman panel cointegration tests, robust to cross-sectional dependence via principal components. Provides group-mean (DHg) and panel (DHp) statistics.
 
 ```r
 library(xtdhcoint)
 result <- xtdhcoint(y ~ x1 + x2, data = panel_data,
-                    id = "country", time = "year")
+                    id = "country", time = "year",
+                    criterion = "bic")
 summary(result)
 ```
 
 ## fcoint
 
-Implements four Fourier-based cointegration tests for smooth structural breaks: the Fourier ADL test (FADL) of @Banerjee2017fadl, the Fourier Engle-Granger tests (FEG and FEG2), and the @Tsong2016 KPSS-type test. Lag and frequency selection via AIC or BIC.
+Four Fourier-based cointegration tests: FADL [@Banerjee2017fadl], FEG, FEG2, and the @Tsong2016 KPSS-type test.
 
 ```r
 library(fcoint)
-result <- fcoint(y, x, test = "fadl", max_freq = 3, ic = "aic")
-summary(result)
+result <- fcoint(y, x, test = "fadl", max_freq = 3,
+                 criterion = "aic")
+print(result)
 ```
 
 ## makicoint
 
-Implements the @Maki2012 cointegration test allowing for an unknown number of structural breaks (up to five). Extends the Gregory-Hansen framework to multiple breaks with four model specifications: level shift, level shift with trend, regime shift, and regime shift with trend.
+Implements the @Maki2012 test allowing an unknown number of breaks (up to five) under four model specifications: level shift, level shift with trend, regime shift, and regime shift with trend.
 
 ```r
 library(makicoint)
-result <- makicoint(y, x, model = "regime_shift",
-                    max_breaks = 3, trim = 0.15)
+result <- makicoint(y, x, model = 2, max_breaks = 3,
+                    trimming = 0.10)
 summary(result)
 ```
 
 ## caustests
 
-A comprehensive suite of Granger causality tests: standard Toda-Yamamoto [@TodaYamamoto1995], Fourier single-frequency [@Enders2016] and cumulative-frequency [@Nazlioglu2019] tests, quantile causality [@Cai2023], and bootstrap Fourier Granger causality in quantiles [@Cheng2021]. All tests include bootstrap inference for robust p-values.
+Granger causality suite: Toda–Yamamoto [@TodaYamamoto1995], Fourier single-frequency [@Enders2016] and cumulative-frequency, quantile causality [@Cai2023], and bootstrap Fourier Granger causality in quantiles [@Cheng2021]. The `test` argument (1–7) selects the method.
 
 ```r
 library(caustests)
-# Fourier Toda-Yamamoto test
-result <- ftycaus(y, x, max_lag = 4, max_freq = 3, nboot = 1000)
+# Fourier Toda-Yamamoto (test = 2)
+result <- caustests(data = cbind(y, x), test = 2,
+                    pmax = 4, kmax = 3, nboot = 1000)
 summary(result)
 
-# Quantile causality test
-result <- qcaus(y, x, taus = c(0.25, 0.5, 0.75), nboot = 500)
+# Quantile causality (test = 6)
+result <- caustests(data = cbind(y, x), test = 6,
+                    quantiles = c(0.25, 0.5, 0.75), nboot = 500)
 summary(result)
 ```
 
 # Acknowledgements
 
-The author acknowledges Anindya Banerjee and Josep Lluís Carrion-i-Silvestre for making their original GAUSS code available, and Joakim Westerlund for the original GAUSS implementation of the Durbin-Hausman test.
+The author acknowledges Anindya Banerjee and Josep Lluís Carrion-i-Silvestre for their original GAUSS code, and Joakim Westerlund for the Durbin–Hausman GAUSS implementation.
 
 # References
