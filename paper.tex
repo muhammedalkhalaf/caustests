@@ -1,0 +1,291 @@
+\section{Summary}\label{summary}
+
+We present eight R packages for cointegration testing and Granger
+causality analysis: \texttt{cointsmall}, \texttt{xtcadfcoint},
+\texttt{xtbreakcoint}, \texttt{hatemicoint}, \texttt{xtdhcoint},
+\texttt{fcoint}, \texttt{makicoint}, and \texttt{caustests}. These
+packages implement a wide range of cointegration tests---from
+small-sample methods with as few as twelve observations to large panel
+tests accommodating cross-sectional dependence, structural breaks, and
+smooth Fourier approximations---as well as comprehensive Granger
+causality tests including Fourier, quantile, and bootstrap variants. All
+packages are open-source under the GPL-3 license.
+
+\section{Statement of Need}\label{statement-of-need}
+
+Cointegration analysis is fundamental to empirical economics,
+underpinning the estimation of long-run equilibrium relationships
+between non-stationary variables. While the \texttt{urca} package (Pfaff
+2008) provides classical Engle-Granger and Johansen tests, and the
+\texttt{cointReg} package offers cointegrating regression estimators,
+the econometric literature has advanced substantially in several
+directions that remain underserved in R:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{Small-sample cointegration}: Standard tests perform poorly
+  with fewer than 50 observations. The Trinh (2022) method handles
+  samples as small as 12 observations with structural breaks.
+\item
+  \textbf{Panel cointegration with breaks and common factors}: Tests by
+  Banerjee and Carrion-i-Silvestre (2015) and Banerjee and
+  Carrion-i-Silvestre (2025) accommodate structural breaks,
+  cross-sectional dependence via common factors, and heterogeneous break
+  locations.
+\item
+  \textbf{Structural break cointegration}: The Hatemi-J (2008) and Maki
+  (2012) tests allow for multiple unknown regime shifts in the
+  cointegrating relationship.
+\item
+  \textbf{Fourier-based cointegration}: Tests by Banerjee et al. (2017)
+  and Tsong et al. (2016) use trigonometric terms to capture smooth
+  structural changes without specifying break dates.
+\item
+  \textbf{Durbin-Hausman panel tests}: Westerlund (2008) provides tests
+  robust to cross-sectional dependence through common factor extraction.
+\item
+  \textbf{Advanced causality testing}: Beyond standard Granger tests,
+  Fourier (Enders and Jones 2016; Nazlioglu et al. 2019), quantile (Cai
+  et al. 2023), and bootstrap Fourier quantile (Cheng et al. 2021)
+  causality tests offer richer causal inference.
+\end{enumerate}
+
+\section{Packages}\label{packages}
+
+\subsection{cointsmall}\label{cointsmall}
+
+Implements the Trinh (2022) cointegration test for very small samples
+(as few as 12 observations). Applies residual-based ADF-type tests with
+up to two endogenous structural breaks in the constant or both constant
+and slope. Includes automatic lag selection via BIC and simulation-based
+critical values.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(cointsmall)}
+\NormalTok{result }\OtherTok{\textless{}{-}} \FunctionTok{cointsmall}\NormalTok{(y, x, }\AttributeTok{model =} \StringTok{"cs"}\NormalTok{, }\AttributeTok{max\_breaks =} \DecValTok{2}\NormalTok{)}
+\FunctionTok{summary}\NormalTok{(result)}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{xtcadfcoint}\label{xtcadfcoint}
+
+Implements the Banerjee and Carrion-i-Silvestre (2025) panel
+cointegration test with structural instabilities. Tests the null of no
+cointegration using cross-sectionally augmented Dickey-Fuller (CADF)
+regressions with Common Correlated Effects (CCE) estimation, allowing
+for structural breaks in cointegrating vectors, factor loadings, and
+deterministic components.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(xtcadfcoint)}
+\NormalTok{result }\OtherTok{\textless{}{-}} \FunctionTok{xtcadfcoint}\NormalTok{(y }\SpecialCharTok{\textasciitilde{}}\NormalTok{ x1 }\SpecialCharTok{+}\NormalTok{ x2, }\AttributeTok{data =}\NormalTok{ panel\_data,}
+                      \AttributeTok{id =} \StringTok{"country"}\NormalTok{, }\AttributeTok{time =} \StringTok{"year"}\NormalTok{, }\AttributeTok{model =} \StringTok{"break"}\NormalTok{)}
+\FunctionTok{summary}\NormalTok{(result)}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{xtbreakcoint}\label{xtbreakcoint}
+
+Implements panel cointegration tests with structural breaks and
+cross-section dependence following Banerjee and Carrion-i-Silvestre
+(2015). Provides iterative factor-break estimation, individual ADF tests
+on defactored residuals, standardized panel statistics, and the Bai and
+Ng (2004) MQ test for identifying common stochastic trends. Five model
+specifications with varying deterministic components.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(xtbreakcoint)}
+\NormalTok{result }\OtherTok{\textless{}{-}} \FunctionTok{xtbreakcoint}\NormalTok{(y }\SpecialCharTok{\textasciitilde{}}\NormalTok{ x1 }\SpecialCharTok{+}\NormalTok{ x2, }\AttributeTok{data =}\NormalTok{ panel\_data,}
+                       \AttributeTok{id =} \StringTok{"country"}\NormalTok{, }\AttributeTok{time =} \StringTok{"year"}\NormalTok{,}
+                       \AttributeTok{model =} \DecValTok{3}\NormalTok{, }\AttributeTok{max\_breaks =} \DecValTok{2}\NormalTok{)}
+\FunctionTok{summary}\NormalTok{(result)}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{hatemicoint}\label{hatemicoint}
+
+Implements the Hatemi-J (2008) cointegration test with two unknown
+regime shifts. Provides ADF\emph{, Zt}, and Zα* test statistics with
+endogenously determined break dates. Critical values are based on the
+simulation tables of Hatemi-J (2008).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(hatemicoint)}
+\NormalTok{result }\OtherTok{\textless{}{-}} \FunctionTok{hatemicoint}\NormalTok{(y, x, }\AttributeTok{model =} \StringTok{"cs"}\NormalTok{)}
+\FunctionTok{summary}\NormalTok{(result)}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{xtdhcoint}\label{xtdhcoint}
+
+Implements the Westerlund (2008) Durbin-Hausman panel cointegration
+tests, which are robust to cross-sectional dependence through common
+factor extraction via principal components. Provides both group-mean
+(DHg) and panel (DHp) test statistics with automatic factor number
+selection.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(xtdhcoint)}
+\NormalTok{result }\OtherTok{\textless{}{-}} \FunctionTok{xtdhcoint}\NormalTok{(y }\SpecialCharTok{\textasciitilde{}}\NormalTok{ x1 }\SpecialCharTok{+}\NormalTok{ x2, }\AttributeTok{data =}\NormalTok{ panel\_data,}
+                    \AttributeTok{id =} \StringTok{"country"}\NormalTok{, }\AttributeTok{time =} \StringTok{"year"}\NormalTok{)}
+\FunctionTok{summary}\NormalTok{(result)}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{fcoint}\label{fcoint}
+
+Implements four Fourier-based cointegration tests for smooth structural
+breaks: the Fourier ADL test (FADL) of Banerjee et al. (2017), the
+Fourier Engle-Granger tests (FEG and FEG2), and the Tsong et al. (2016)
+KPSS-type test. Lag and frequency selection via AIC or BIC.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(fcoint)}
+\NormalTok{result }\OtherTok{\textless{}{-}} \FunctionTok{fcoint}\NormalTok{(y, x, }\AttributeTok{test =} \StringTok{"fadl"}\NormalTok{, }\AttributeTok{max\_freq =} \DecValTok{3}\NormalTok{, }\AttributeTok{ic =} \StringTok{"aic"}\NormalTok{)}
+\FunctionTok{summary}\NormalTok{(result)}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{makicoint}\label{makicoint}
+
+Implements the Maki (2012) cointegration test allowing for an unknown
+number of structural breaks (up to five). Extends the Gregory-Hansen
+framework to multiple breaks with four model specifications: level
+shift, level shift with trend, regime shift, and regime shift with
+trend.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(makicoint)}
+\NormalTok{result }\OtherTok{\textless{}{-}} \FunctionTok{makicoint}\NormalTok{(y, x, }\AttributeTok{model =} \StringTok{"regime\_shift"}\NormalTok{,}
+                    \AttributeTok{max\_breaks =} \DecValTok{3}\NormalTok{, }\AttributeTok{trim =} \FloatTok{0.15}\NormalTok{)}
+\FunctionTok{summary}\NormalTok{(result)}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{caustests}\label{caustests}
+
+A comprehensive suite of Granger causality tests: standard Toda-Yamamoto
+(Toda and Yamamoto 1995), Fourier single-frequency (Enders and Jones
+2016) and cumulative-frequency (Nazlioglu et al. 2019) tests, quantile
+causality (Cai et al. 2023), and bootstrap Fourier Granger causality in
+quantiles (Cheng et al. 2021). All tests include bootstrap inference for
+robust p-values.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(caustests)}
+\CommentTok{\# Fourier Toda{-}Yamamoto test}
+\NormalTok{result }\OtherTok{\textless{}{-}} \FunctionTok{ftycaus}\NormalTok{(y, x, }\AttributeTok{max\_lag =} \DecValTok{4}\NormalTok{, }\AttributeTok{max\_freq =} \DecValTok{3}\NormalTok{, }\AttributeTok{nboot =} \DecValTok{1000}\NormalTok{)}
+\FunctionTok{summary}\NormalTok{(result)}
+
+\CommentTok{\# Quantile causality test}
+\NormalTok{result }\OtherTok{\textless{}{-}} \FunctionTok{qcaus}\NormalTok{(y, x, }\AttributeTok{taus =} \FunctionTok{c}\NormalTok{(}\FloatTok{0.25}\NormalTok{, }\FloatTok{0.5}\NormalTok{, }\FloatTok{0.75}\NormalTok{), }\AttributeTok{nboot =} \DecValTok{500}\NormalTok{)}
+\FunctionTok{summary}\NormalTok{(result)}
+\end{Highlighting}
+\end{Shaded}
+
+\section{Acknowledgements}\label{acknowledgements}
+
+The author acknowledges Anindya Banerjee and Josep Lluís
+Carrion-i-Silvestre for making their original GAUSS code available, and
+Joakim Westerlund for the original GAUSS implementation of the
+Durbin-Hausman test.
+
+\section*{References}\label{references}
+\addcontentsline{toc}{section}{References}
+
+\protect\phantomsection\label{refs}
+\begin{CSLReferences}{1}{1}
+\bibitem[\citeproctext]{ref-BaiNg2004}
+Bai, Jushan, and Serena Ng. 2004. {``A {PANIC} Attack on Unit Roots and
+Cointegration.''} \emph{Econometrica} 72 (4): 1127--77.
+\url{https://doi.org/10.1111/j.1468-0262.2004.00528.x}.
+
+\bibitem[\citeproctext]{ref-Banerjee2015}
+Banerjee, Anindya, and Josep Lluís Carrion-i-Silvestre. 2015.
+{``Cointegration in Panel Data with Structural Breaks and Cross-Section
+Dependence.''} \emph{Journal of Applied Econometrics} 30 (1): 1--22.
+\url{https://doi.org/10.1002/jae.2348}.
+
+\bibitem[\citeproctext]{ref-Banerjee2024}
+Banerjee, Anindya, and Josep Lluís Carrion-i-Silvestre. 2025. {``Panel
+Cointegration Tests with Structural Instabilities.''} \emph{Journal of
+Business \& Economic Statistics} 42 (3): 1043--55.
+\url{https://doi.org/10.1080/07350015.2024.2352073}.
+
+\bibitem[\citeproctext]{ref-Banerjee2017fadl}
+Banerjee, Parantap, Vladimir Arcabic, and Hyejin Lee. 2017. {``Testing
+for Cointegration in a {Fourier} Autoregressive Distributed Lag
+Framework.''} \emph{Economic Modelling} 61: 120--31.
+\url{https://doi.org/10.1016/j.econmod.2017.03.004}.
+
+\bibitem[\citeproctext]{ref-Cai2023}
+Cai, Yifei, Dayong Zhang, Tsangyao Chang, and Chia-Hao Lee. 2023.
+{``Quantile Dependence Between Crude Oil and {China}'s Biofuel Feedstock
+Commodity Market.''} \emph{Finance Research Letters} 54: 104327.
+\url{https://doi.org/10.1016/j.frl.2023.104327}.
+
+\bibitem[\citeproctext]{ref-Cheng2021}
+Cheng, Shu-Yu, Zhe Cao, and Tie Li. 2021. {``Bootstrap {Fourier} Granger
+Causality Test in Quantiles.''} \emph{Journal of Statistical Theory and
+Practice} 15: 63. \url{https://doi.org/10.1007/s12076-020-00263-0}.
+
+\bibitem[\citeproctext]{ref-Enders2016}
+Enders, Walter, and Paul Jones. 2016. {``A Unit Root Test Using a
+{Fourier} Series to Approximate Smooth Breaks.''} \emph{Studies in
+Nonlinear Dynamics \& Econometrics} 20 (3): 281--301.
+\url{https://doi.org/10.1515/snde-2014-0101}.
+
+\bibitem[\citeproctext]{ref-HatemiJ2008}
+Hatemi-J, Abdulnasser. 2008. {``Tests for Cointegration with Two Unknown
+Regime Shifts with an Application to Financial Market Integration.''}
+\emph{Empirical Economics} 35 (3): 497--505.
+\url{https://doi.org/10.1007/s00181-007-0175-9}.
+
+\bibitem[\citeproctext]{ref-Maki2012}
+Maki, Daiki. 2012. {``Tests for Cointegration Allowing for an Unknown
+Number of Breaks.''} \emph{Economic Modelling} 29 (5): 2011--15.
+\url{https://doi.org/10.1016/j.econmod.2012.04.022}.
+
+\bibitem[\citeproctext]{ref-Nazlioglu2019}
+Nazlioglu, Saban, Ugur Soytas, and Rangan Gupta. 2019. {``Oil Prices and
+Financial Stress: A Volatility Spillover Analysis.''} \emph{Emerging
+Markets Finance and Trade} 55 (12): 2809--26.
+\url{https://doi.org/10.1080/1540496X.2018.1434072}.
+
+\bibitem[\citeproctext]{ref-Pfaff2008}
+Pfaff, Bernhard. 2008. \emph{Analysis of Integrated and Cointegrated
+Time Series with r}. 2nd ed. Springer.
+\url{https://doi.org/10.1007/978-0-387-75967-8}.
+
+\bibitem[\citeproctext]{ref-TodaYamamoto1995}
+Toda, Hiro Y., and Taku Yamamoto. 1995. {``Statistical Inference in
+Vector Autoregressions with Possibly Integrated Processes.''}
+\emph{Journal of Econometrics} 66 (1--2): 225--50.
+\url{https://doi.org/10.1016/0304-4076(94)01616-8}.
+
+\bibitem[\citeproctext]{ref-Trinh2022}
+Trinh, Thi Huyen. 2022. {``Cointegration Tests for Very Small
+Samples.''} \url{https://www.thema.u-cergy.fr/IMG/pdf/2022-01.pdf}.
+
+\bibitem[\citeproctext]{ref-Tsong2016}
+Tsong, Ching-Chuan, Cheng-Feng Lee, Li-Ju Tsai, and Te-Chung Hu. 2016.
+{``The {Fourier} Approximation and Testing for the Null of
+Cointegration.''} \emph{Empirical Economics} 51 (3): 1085--113.
+\url{https://doi.org/10.1007/s00181-015-0921-5}.
+
+\bibitem[\citeproctext]{ref-Westerlund2008}
+Westerlund, Joakim. 2008. {``Panel Cointegration Tests of the {Fisher}
+Hypothesis.''} \emph{Journal of Applied Econometrics} 23 (2): 193--233.
+\url{https://doi.org/10.1002/jae.963}.
+
+\end{CSLReferences}

@@ -3,20 +3,29 @@
 \docType{package}
 \name{caustests-package}
 \alias{caustests-package}
-\title{caustests: Multiple Granger Causality Tests}
+\title{caustests: Multiple Granger Causality Tests for Time Series and Panel Data}
 \description{
-Comprehensive suite of Granger causality tests including standard
-Toda-Yamamoto, Fourier-based tests with single and cumulative frequencies,
-and quantile causality tests with bootstrap inference.
+Comprehensive suite of Granger causality tests for time series and panel
+data including standard Toda-Yamamoto, Fourier-based tests, quantile
+causality tests, panel Fourier Toda-Yamamoto, panel quantile causality,
+and Group-Mean/Pooled FM-OLS for panel cointegrating polynomial regressions.
 }
-\section{Main Function}{
+\section{Time Series Functions}{
 
 \itemize{
-  \item \code{\link{caustests}}: Perform Granger causality tests
+  \item \code{\link{caustests}}: Perform Granger causality tests (time series)
 }
 }
 
-\section{Available Tests}{
+\section{Panel Data Functions}{
+
+\itemize{
+  \item \code{\link{xtpcaus}}: Panel Granger causality tests (PFTY and PQC)
+  \item \code{\link{xtpcmg}}: Panel cointegrating polynomial regressions (FM-OLS)
+}
+}
+
+\section{Available Tests (Time Series)}{
 
 \enumerate{
   \item Toda-Yamamoto (1995) - Robust to integration order
@@ -29,10 +38,22 @@ and quantile causality tests with bootstrap inference.
 }
 }
 
+\section{Available Tests (Panel Data)}{
+
+\enumerate{
+  \item Panel Fourier Toda-Yamamoto (Yilanci and Gorus, 2020)
+  \item Panel Quantile Causality (Wang and Nguyen, 2022)
+  \item Group-Mean FM-OLS (Wagner and Reichold, 2023)
+  \item Pooled FM-OLS (de Jong and Wagner, 2022)
+}
+}
+
 \section{Data}{
 
 \itemize{
   \item \code{\link{caustests_data}}: Example time series dataset
+  \item \code{\link{grunfeld_panel}}: Example panel dataset for xtpcaus
+  \item \code{\link{grunfeld_cmg}}: Example panel dataset for xtpcmg
 }
 }
 
@@ -65,6 +86,24 @@ Bootstrap Fourier Granger causality test in quantiles and the asymmetric
 causal relationship between CO2 emissions and economic growth. 
 \emph{Letters in Spatial and Resource Sciences}, 14, 31-49. 
 \doi{10.1007/s12076-020-00263-0}
+
+Yilanci, V. and Gorus, M.S. (2020). Does economic globalization have 
+predictive power for ecological footprint in MENA counties? A panel 
+causality test with a Fourier function. \emph{Environmental Science and 
+Pollution Research}, 27, 40552-40562. \doi{10.1007/s11356-020-10092-9}
+
+Wang, K.M. and Nguyen, T.B. (2022). A quantile panel-type analysis of 
+income inequality and healthcare expenditure. \emph{Economic Research}, 
+35(1), 873-893. \doi{10.1080/1331677X.2021.1952089}
+
+Wagner, M. and Reichold, K. (2023). Panel cointegrating polynomial 
+regressions: group-mean fully modified OLS estimation and inference. 
+\emph{Econometric Reviews}, 42(4), 358-392. 
+\doi{10.1080/07474938.2023.2178141}
+
+de Jong, R.M. and Wagner, M. (2022). Panel cointegrating polynomial 
+regressions. \emph{Annals of Applied Statistics}, 16(1), 416-442. 
+\doi{10.1214/21-AOAS1536}
 }
 \seealso{
 Useful links:
@@ -76,11 +115,6 @@ Useful links:
 }
 \author{
 \strong{Maintainer}: Muhammad Alkhalaf \email{muhammedalkhalaf@gmail.com} (\href{https://orcid.org/0009-0002-2677-9246}{ORCID}) [copyright holder]
-
-Other contributors:
-\itemize{
-  \item
-}
 
 }
 \keyword{internal}
