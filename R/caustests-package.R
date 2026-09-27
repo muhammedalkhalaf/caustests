@@ -79,7 +79,7 @@
 #'
 #' Wang, K.M. and Nguyen, T.B. (2022). A quantile panel-type analysis of 
 #' income inequality and healthcare expenditure. \emph{Economic Research}, 
-#' 35(1), 873-893. \doi{10.1080/1331677X.2021.1952089}
+#' 35(1), 873-893. \doi{10.1080/1331677X.2021.1948436}
 #'
 #' Wagner, M. and Reichold, K. (2023). Panel cointegrating polynomial 
 #' regressions: group-mean fully modified OLS estimation and inference. 
