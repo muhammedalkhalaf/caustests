@@ -111,7 +111,6 @@ covariance matrix estimation. \emph{Econometrica}, 59(3), 817--858.
 
 de Jong, R.M. and Wagner, M. (2022). Panel cointegrating polynomial
 regressions. \emph{Annals of Applied Statistics}, 16(1), 416--442.
-\doi{10.1214/21-AOAS1536}
 
 Wagner, M. and Reichold, K. (2023). Panel cointegrating polynomial
 regressions. \emph{Econometric Reviews}, 42(9--10), 782--827.
