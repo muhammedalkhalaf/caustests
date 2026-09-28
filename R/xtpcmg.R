@@ -254,6 +254,9 @@ xtpcmg <- function(data, y, x, panel_id, time_id,
 
 #' @keywords internal
 .xtpcmg_lr_var <- function(u, kern, band, demean = FALSE) {
+  # Port of lr_varmod.m (authors' MATLAB code) as translated in the Stata
+  # module xtpcmg 1.0.2. Delta is the one-sided long-run covariance
+  # sum_{j >= 0} E(w_t w_{t+j}'), so that Delta[2, 1] = sum_j E(v_t u_{t+j}).
   TT <- nrow(u)
   m  <- ncol(u)
   if (demean) u <- u - matrix(colMeans(u), nrow = TT, ncol = m, byrow = TRUE)
@@ -263,19 +266,32 @@ xtpcmg <- function(data, y, x, panel_id, time_id,
   j_max <- wl$j_max
 
   Sigma <- crossprod(u) / TT
-  Omega <- Sigma
-  Delta <- Sigma
-
-  if (j_max >= 1L) {
-    for (j in seq_len(j_max)) {
-      T1 <- crossprod(u[seq(j + 1L, TT), , drop = FALSE],
-                      u[seq(1L, TT - j), , drop = FALSE]) / TT
-      T2 <- t(T1)
-      Omega <- Omega + w[j] * (T1 + T2)
-      Delta <- Delta + w[j] * T1
+  if (kern %in% c("qs", "da")) {
+    ws <- c(0, w)
+    R <- matrix(0, TT, TT)
+    for (ii in seq_len(TT)) {
+      jj <- ii:TT
+      idx <- jj - ii + 1L
+      ok <- idx <= length(ws)
+      R[ii, jj[ok]] <- ws[idx[ok]]
     }
+    R[TT, ] <- 0
+    Delta <- crossprod(u, R %*% u) / TT
+    Omega <- Delta + t(Delta)
+  } else {
+    Omega <- matrix(0, m, m)
+    Delta <- matrix(0, m, m)
+    if (j_max >= 1L) {
+      for (j in seq_len(j_max)) {
+        T1 <- crossprod(u[seq(j + 1L, TT), , drop = FALSE],
+                        u[seq(1L, TT - j), , drop = FALSE]) / TT
+        Omega <- Omega + w[j] * (T1 + t(T1))
+        Delta <- Delta + w[j] * T1
+      }
+    }
+    Delta <- t(Delta)
   }
-  list(Omega = Omega, Delta = Delta, Sigma = Sigma)
+  list(Omega = Omega + Sigma, Delta = Delta + Sigma, Sigma = Sigma)
 }
 
 #' @keywords internal
@@ -463,7 +479,15 @@ xtpcmg <- function(data, y, x, panel_id, time_id,
         if (nc > 0L) for (k in seq_len(nc)) Xj <- cbind(Xj, zt_list[[(k - 1L) * N + j]])
         Mij <- crossprod(Xi, Xj)
         Mjj <- crossprod(Xj)
-        Ouu_ij <- lr_all$Omega[i, j]
+        # Conditional long-run covariance between units i and j
+        Om <- lr_all$Omega
+        Ouu <- Om[seq_len(N), seq_len(N)]
+        Ouv <- Om[seq_len(N), N + seq_len(N)]
+        Ovu <- Om[N + seq_len(N), seq_len(N)]
+        Ovv <- Om[N + seq_len(N), N + seq_len(N)]
+        Ouu_ij <- Ouu[i, j] - (Ouv[i, i] / Ovv[i, i]) * Ovu[i, j] -
+          (Ouv[j, j] / Ovv[j, j]) * Ovu[j, i] +
+          (Ouv[i, i] / Ovv[i, i]) * Ovv[i, j] * (Ovu[j, j] / Ovv[j, j])
         Mii_inv <- tryCatch(solve(Mii), error = function(e) NULL)
         Mjj_inv <- tryCatch(solve(Mjj), error = function(e) NULL)
         if (!is.null(Mii_inv) && !is.null(Mjj_inv)) {
@@ -530,8 +554,8 @@ xtpcmg <- function(data, y, x, panel_id, time_id,
   # LSDV
   XtX_inv <- tryCatch(solve(crossprod(Xvec)), error = function(e) NULL)
   if (is.null(XtX_inv)) {
-    return(list(coefficients = rep(0, p),
-                vcov = diag(p), ind_coef = NULL))
+    return(list(coefficients = rep(NA_real_, p),
+                vcov = matrix(NA_real_, p, p), ind_coef = NULL))
   }
   beta_lsdv <- as.numeric(XtX_inv %*% crossprod(Xvec, yt_vec))
   u_vec  <- as.numeric(yt_vec - Xvec %*% beta_lsdv)
@@ -540,6 +564,18 @@ xtpcmg <- function(data, y, x, panel_id, time_id,
   Sum_Lr <- matrix(0, 2L, 2L)
   Sum_Dr <- matrix(0, 2L, 2L)
   Sum_FM  <- numeric(p)
+  # Asymptotic covariance of the pooled FM-OLS estimator (de Jong and
+  # Wagner, 2022), as in the authors' PanelEKC_indiv_eff_only.m and
+  # PanelEKC_two_eff.m translated in the Stata module xtpcmg 1.0.2
+  if (q == 2L) {
+    GT    <- diag(c(TT^(-1), TT^(-1.5)))
+    M_mat <- matrix(c(1/6, 0, 0, 5/12), 2L, 2L)
+  } else {
+    GT    <- diag(c(TT^(-1), TT^(-1.5), TT^(-2)))
+    M_mat <- matrix(c(1/6, 0, 3/8, 0, 5/12, 0, 3/8, 0, 39/20), 3L, 3L)
+  }
+  Sum_DMD <- Sum_ODMD <- matrix(0, q, q)
+  Sum_Oud <- Sum_OudOvv <- 0
 
   for (i in seq_len(N)) {
     idx_i <- seq((i - 1L) * TT + 1L, i * TT)
@@ -547,8 +583,16 @@ xtpcmg <- function(data, y, x, panel_id, time_id,
     vt_i  <- c(X_mat[1L, i], diff(X_mat[, i]))
     bw_i  <- .xtpcmg_get_bw(u_i, vt_i, kern, bw_spec)
     lr_i  <- .xtpcmg_lr_var(cbind(u_i, vt_i), kern, bw_i)
-    Sum_Lr <- Sum_Lr + lr_i$Omega
+    Lr_i  <- lr_i$Omega
+    Sum_Lr <- Sum_Lr + Lr_i
     Sum_Dr <- Sum_Dr + lr_i$Delta
+    D_i <- if (q == 2L) diag(c(Lr_i[2, 2]^0.5, Lr_i[2, 2])) else
+      diag(c(Lr_i[2, 2]^0.5, Lr_i[2, 2], Lr_i[2, 2]^1.5))
+    Oud_i <- Lr_i[1, 1] - Lr_i[2, 1]^2 / Lr_i[2, 2]
+    Sum_Oud  <- Sum_Oud + Oud_i
+    Sum_OudOvv <- Sum_OudOvv + Oud_i * Lr_i[2, 2]
+    Sum_DMD  <- Sum_DMD + D_i %*% M_mat %*% D_i
+    Sum_ODMD <- Sum_ODMD + Oud_i * (D_i %*% M_mat %*% D_i)
   }
 
   Lr_mean <- Sum_Lr / N
@@ -579,10 +623,28 @@ xtpcmg <- function(data, y, x, panel_id, time_id,
 
   beta_fm <- as.numeric(XtX_inv %*% Sum_FM)
 
-  # VCV (simplified sandwich)
-  u_fm  <- yt_vec - Xvec %*% beta_fm
-  sigma2 <- sum(u_fm^2) / (N * TT - p)
-  VCV    <- sigma2 * XtX_inv
+  V1 <- Sum_DMD / N
+  S11 <- Sum_ODMD / N
+  if (effects == "twoway") {
+    e2 <- c(0, 1, if (q == 3L) 0)
+    V2 <- V1 - diag(e2 * Lr_mean[2, 2]^2 / 12)
+    S2 <- S11 - diag(e2 * Lr_mean[2, 2] * (Sum_OudOvv / N) / 6) +
+      diag(e2 * (Sum_Oud / N) * Lr_mean[2, 2]^2 / 12)
+    Vi <- solve(V2)
+    VCV_poly <- GT %*% (Vi %*% S2 %*% Vi) %*% GT / N
+  } else {
+    Vi <- solve(V1)
+    VCV_poly <- GT %*% (Vi %*% S11 %*% Vi) %*% GT / N
+  }
+  VCV <- matrix(0, p, p)
+  VCV[seq_len(q), seq_len(q)] <- VCV_poly
+  if (nc > 0L) {
+    # Controls: heteroskedasticity-robust sandwich from the FM residuals
+    Xc <- Xvec[, q + seq_len(nc), drop = FALSE]
+    u_fm <- as.numeric(yt_vec - Xvec %*% beta_fm)
+    bread <- solve(crossprod(Xc))
+    VCV[q + seq_len(nc), q + seq_len(nc)] <- bread %*% crossprod(Xc * u_fm) %*% bread
+  }
 
   list(coefficients = beta_fm, vcov = VCV, ind_coef = NULL)
 }
