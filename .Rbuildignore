@@ -1,3 +1,4 @@
 ^paper\.tex$
 ^paper\.md$
 ^paper\.bib$
+^cran-comments\.md$
