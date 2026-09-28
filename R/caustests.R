@@ -411,7 +411,7 @@ summary.caustests <- function(object, ...) {
   if (kmax == 0) {
     # No Fourier: select p only
     for (p in 1:pmax) {
-      ic_val <- .compute_var_ic(y, p + dmax, 0, test, n_obs, ic_type)
+      ic_val <- .compute_var_ic(y, p, 0, test, n_obs, ic_type)
       if (!is.na(ic_val) && ic_val < best_ic) {
         best_ic <- ic_val
         p_opt <- p
@@ -421,7 +421,7 @@ summary.caustests <- function(object, ...) {
     # Fourier: select (p, k) jointly
     for (k in 1:kmax) {
       for (p in 1:pmax) {
-        ic_val <- .compute_var_ic(y, p + dmax, k, test, n_obs, ic_type)
+        ic_val <- .compute_var_ic(y, p, k, test, n_obs, ic_type)
         if (!is.na(ic_val) && ic_val < best_ic) {
           best_ic <- ic_val
           p_opt <- p
@@ -516,15 +516,16 @@ summary.caustests <- function(object, ...) {
     # Constant only
     return(matrix(1, nrow = T_eff, ncol = 1))
   }
-  
-  # Time index for Fourier terms
-  t_seq <- seq_len(T_eff)
-  
+
+  # Fourier terms use the time index of the full sample, t = 1, ..., T,
+  # evaluated on the observations kept after the lags are formed.
+  t_seq <- (T_orig - T_eff + 1):T_orig
+
   if (test %in% c(2, 3)) {
     # Single frequency
     fourier <- cbind(
-      sin(2 * pi * k_freq * t_seq / T_eff),
-      cos(2 * pi * k_freq * t_seq / T_eff)
+      sin(2 * pi * k_freq * t_seq / T_orig),
+      cos(2 * pi * k_freq * t_seq / T_orig)
     )
   } else {
     # Cumulative frequencies (tests 4, 5, 7)
@@ -532,12 +533,12 @@ summary.caustests <- function(object, ...) {
     for (ki in 1:k_freq) {
       fourier <- cbind(
         fourier,
-        sin(2 * pi * ki * t_seq / T_eff),
-        cos(2 * pi * ki * t_seq / T_eff)
+        sin(2 * pi * ki * t_seq / T_orig),
+        cos(2 * pi * ki * t_seq / T_orig)
       )
     }
   }
-  
+
   cbind(1, fourier)
 }
 
@@ -676,13 +677,14 @@ summary.caustests <- function(object, ...) {
   
   # Deterministic terms (only for test 7)
   if (test == 7 && k_opt > 0) {
-    t_seq <- seq_len(T_eff)
+    T_orig <- nrow(y)
+    t_seq <- (T_orig - T_eff + 1):T_orig
     fourier <- NULL
     for (ki in 1:k_opt) {
       fourier <- cbind(
         fourier,
-        sin(2 * pi * ki * t_seq / T_eff),
-        cos(2 * pi * ki * t_seq / T_eff)
+        sin(2 * pi * ki * t_seq / T_orig),
+        cos(2 * pi * ki * t_seq / T_orig)
       )
     }
     z <- cbind(1, xl, fourier)
