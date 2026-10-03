@@ -1,11 +1,10 @@
-## caustests 1.1.4
+## caustests 1.1.5
 
-This release corrects the computations below and replaces the 1.1.3 submission, which should be discarded.
+This release changes how a quantreg warning is reported; no numerical results change. The version on CRAN is 1.1.4.
 
-* `xtpcmg()`: the one-sided long-run covariance used in the fully modified bias correction was transposed (it estimated the sum of E(u_t v_{t+j}) instead of E(v_t u_{t+j})), and the quadratic spectral and Daniell kernels did not use the one-sided weights of the authors' code; group-mean and pooled FM-OLS estimates were therefore biased. The long-run covariance now follows the authors' lr_varmod.m.
-* `xtpcmg()`, pooled model: the covariance matrix is now the asymptotic covariance of de Jong and Wagner (2022) for one-way and two-way effects (as in the authors' PanelEKC code), with a heteroskedasticity-robust sandwich for the controls; the previous version used sigma^2 (X'X)^-1 from the FM residuals, and a unit matrix when X'X was singular.
-* `xtpcmg()`, cross-section robust covariance (`corr_rob = TRUE`): uses the conditional long-run covariance between units instead of the covariance of u alone.
-* All `xtpcmg()` estimates and standard errors now reproduce the Stata module xtpcmg 1.0.2; tests added.
+* Tests 6 and 7 (quantile causality): `quantreg::summary.rq(se = "nid")` warns "k non-positive fis" when the sparsity estimate is non-positive at some observations. The package called it once for the observed sample and once per bootstrap replication at every quantile, so the same warning was repeated up to (nboot + 1) times per quantile and direction (for example 965 times for test 7 on `caustests_data` with 5 quantiles and `nboot = 99`), which users mistook for an error. These warnings are now counted inside the loops and reported once per call, with the directions, quantiles and number of fits affected. Other warnings are not suppressed.
+* New element `quantreg_warnings` in the returned object (tests 6-7): a data frame with the number of affected quantile regression fits per direction and quantile. `print()` adds one line when any occurred.
+* No numerical results change: Wald statistics and bootstrap p-values are identical to version 1.1.4 for the same seed.
 
 ## Test environments
 

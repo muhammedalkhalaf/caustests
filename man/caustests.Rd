@@ -22,9 +22,9 @@ caustests(
 \item{test}{Integer 1-7 specifying the test type:
 \itemize{
   \item 1: Toda-Yamamoto (1995)
-  \item 2: Single Fourier Granger (Enders & Jones, 2016)
+  \item 2: Single Fourier Granger (Enders and Jones, 2016)
   \item 3: Single Fourier Toda-Yamamoto (Nazlioglu et al., 2016)
-  \item 4: Cumulative Fourier Granger (Enders & Jones, 2019)
+  \item 4: Cumulative Fourier Granger (Enders and Jones, 2019)
   \item 5: Cumulative Fourier Toda-Yamamoto (Nazlioglu et al., 2019)
   \item 6: Quantile Toda-Yamamoto (Cai et al., 2023)
   \item 7: Bootstrap Fourier Granger Causality in Quantiles (Cheng et al., 2021)
@@ -58,6 +58,12 @@ An object of class \code{"caustests"} containing:
   \item{dmax}{Augmentation lags}
   \item{quantiles}{Quantiles used (for tests 6-7)}
   \item{quantile_results}{Detailed quantile results (for tests 6-7)}
+  \item{quantreg_warnings}{For tests 6-7, a data frame with one row per
+    direction and quantile giving the number of quantile regression fits
+    (observed sample plus bootstrap replications) for which
+    \code{quantreg::summary.rq(se = "nid")} reported "non-positive fis";
+    \code{NULL} for tests 1-5. The individual quantreg warnings are not
+    shown; one summary warning is issued instead if any occurred.}
 }
 \description{
 Performs various Granger causality tests including Toda-Yamamoto,
@@ -110,30 +116,30 @@ print(result6)
 
 }
 \references{
-Toda, H. Y., & Yamamoto, T. (1995). Statistical inference in vector 
+Toda, H. Y. and Yamamoto, T. (1995). Statistical inference in vector 
 autoregressions with possibly integrated processes. \emph{Journal of 
 Econometrics}, 66(1-2), 225-250. \doi{10.1016/0304-4076(94)01616-8}
 
-Enders, W., & Jones, P. (2016). Grain prices, oil prices, and multiple 
+Enders, W. and Jones, P. (2016). Grain prices, oil prices, and multiple 
 smooth breaks in a VAR. \emph{Studies in Nonlinear Dynamics & Econometrics},
 20(4), 399-419. \doi{10.1515/snde-2014-0101}
 
-Nazlioglu, S., Gormus, N. A., & Soytas, U. (2016). Oil prices and real 
+Nazlioglu, S., Gormus, N. A. and Soytas, U. (2016). Oil prices and real 
 estate investment trusts (REITs): Gradual-shift causality and volatility 
 transmission analysis. \emph{Energy Economics}, 60, 168-175. 
 \doi{10.1016/j.eneco.2016.09.009}
 
-Nazlioglu, S., Soytas, U., & Gormus, N. A. (2019). Oil prices and monetary 
+Nazlioglu, S., Soytas, U. and Gormus, N. A. (2019). Oil prices and monetary 
 policy in emerging markets: Structural shifts in causal linkages. 
 \emph{Emerging Markets Finance and Trade}, 55(1), 105-117. 
 \doi{10.1080/1540496X.2018.1434072}
 
-Cai, Y., Chang, T., Xiang, Y., & Chang, H. L. (2023). Testing Granger 
+Cai, Y., Chang, T., Xiang, Y. and Chang, H. L. (2023). Testing Granger 
 causality in quantiles between the stock and the foreign exchange markets 
 of Japan. \emph{Finance Research Letters}, 58, 104327. 
 \doi{10.1016/j.frl.2023.104327}
 
-Cheng, S. C., Hsueh, H. P., Ranjbar, O., Wang, M. C., & Chang, T. (2021). 
+Cheng, S. C., Hsueh, H. P., Ranjbar, O., Wang, M. C. and Chang, T. (2021). 
 Bootstrap Fourier Granger causality test in quantiles and the asymmetric 
 causal relationship between CO2 emissions and economic growth. 
 \emph{Letters in Spatial and Resource Sciences}, 14, 31-49. 

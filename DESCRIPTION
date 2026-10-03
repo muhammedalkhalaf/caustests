@@ -1,7 +1,8 @@
 Package: caustests
 Type: Package
 Title: Multiple Granger Causality Tests for Time Series and Panel Data
-Version: 1.1.4
+Version: 1.1.5
+Date: 2026-10-03
 Authors@R: c(
     person("Muhammad", "Alkhalaf", 
            email = "muhammedalkhalaf@gmail.com",

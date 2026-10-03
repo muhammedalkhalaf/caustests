@@ -8,9 +8,9 @@
 #' @param test Integer 1-7 specifying the test type:
 #'   \itemize{
 #'     \item 1: Toda-Yamamoto (1995)
-#'     \item 2: Single Fourier Granger (Enders & Jones, 2016)
+#'     \item 2: Single Fourier Granger (Enders and Jones, 2016)
 #'     \item 3: Single Fourier Toda-Yamamoto (Nazlioglu et al., 2016)
-#'     \item 4: Cumulative Fourier Granger (Enders & Jones, 2019)
+#'     \item 4: Cumulative Fourier Granger (Enders and Jones, 2019)
 #'     \item 5: Cumulative Fourier Toda-Yamamoto (Nazlioglu et al., 2019)
 #'     \item 6: Quantile Toda-Yamamoto (Cai et al., 2023)
 #'     \item 7: Bootstrap Fourier Granger Causality in Quantiles (Cheng et al., 2021)
@@ -36,6 +36,12 @@
 #'   \item{dmax}{Augmentation lags}
 #'   \item{quantiles}{Quantiles used (for tests 6-7)}
 #'   \item{quantile_results}{Detailed quantile results (for tests 6-7)}
+#'   \item{quantreg_warnings}{For tests 6-7, a data frame with one row per
+#'     direction and quantile giving the number of quantile regression fits
+#'     (observed sample plus bootstrap replications) for which
+#'     \code{quantreg::summary.rq(se = "nid")} reported "non-positive fis";
+#'     \code{NULL} for tests 1-5. The individual quantreg warnings are not
+#'     shown; one summary warning is issued instead if any occurred.}
 #'
 #' @details
 #' The package implements seven Granger causality tests:
@@ -62,30 +68,30 @@
 #' under structural breaks and across quantiles.
 #'
 #' @references
-#' Toda, H. Y., & Yamamoto, T. (1995). Statistical inference in vector 
+#' Toda, H. Y. and Yamamoto, T. (1995). Statistical inference in vector 
 #' autoregressions with possibly integrated processes. \emph{Journal of 
 #' Econometrics}, 66(1-2), 225-250. \doi{10.1016/0304-4076(94)01616-8}
 #'
-#' Enders, W., & Jones, P. (2016). Grain prices, oil prices, and multiple 
+#' Enders, W. and Jones, P. (2016). Grain prices, oil prices, and multiple 
 #' smooth breaks in a VAR. \emph{Studies in Nonlinear Dynamics & Econometrics},
 #' 20(4), 399-419. \doi{10.1515/snde-2014-0101}
 #'
-#' Nazlioglu, S., Gormus, N. A., & Soytas, U. (2016). Oil prices and real 
+#' Nazlioglu, S., Gormus, N. A. and Soytas, U. (2016). Oil prices and real 
 #' estate investment trusts (REITs): Gradual-shift causality and volatility 
 #' transmission analysis. \emph{Energy Economics}, 60, 168-175. 
 #' \doi{10.1016/j.eneco.2016.09.009}
 #'
-#' Nazlioglu, S., Soytas, U., & Gormus, N. A. (2019). Oil prices and monetary 
+#' Nazlioglu, S., Soytas, U. and Gormus, N. A. (2019). Oil prices and monetary 
 #' policy in emerging markets: Structural shifts in causal linkages. 
 #' \emph{Emerging Markets Finance and Trade}, 55(1), 105-117. 
 #' \doi{10.1080/1540496X.2018.1434072}
 #'
-#' Cai, Y., Chang, T., Xiang, Y., & Chang, H. L. (2023). Testing Granger 
+#' Cai, Y., Chang, T., Xiang, Y. and Chang, H. L. (2023). Testing Granger 
 #' causality in quantiles between the stock and the foreign exchange markets 
 #' of Japan. \emph{Finance Research Letters}, 58, 104327. 
 #' \doi{10.1016/j.frl.2023.104327}
 #'
-#' Cheng, S. C., Hsueh, H. P., Ranjbar, O., Wang, M. C., & Chang, T. (2021). 
+#' Cheng, S. C., Hsueh, H. P., Ranjbar, O., Wang, M. C. and Chang, T. (2021). 
 #' Bootstrap Fourier Granger causality test in quantiles and the asymmetric 
 #' causal relationship between CO2 emissions and economic growth. 
 #' \emph{Letters in Spatial and Resource Sciences}, 14, 31-49. 
@@ -186,11 +192,14 @@ caustests <- function(data, test, pmax = 8, ic = 1, nboot = 1000,
   if (test %in% 1:5) {
     results <- .run_ols_tests(data, vnames, pmax, ic, test, nboot, kmax, dmax, verbose)
     quantile_results <- NULL
+    quantreg_warnings <- NULL
   } else {
     results <- .run_quantile_tests(data, vnames, pmax, ic, test, nboot, kmax, 
                                     dmax, quantiles, verbose)
     quantile_results <- attr(results, "quantile_details")
     attr(results, "quantile_details") <- NULL
+    quantreg_warnings <- attr(results, "quantreg_warnings")
+    attr(results, "quantreg_warnings") <- NULL
   }
   
   # Create output object
@@ -205,6 +214,7 @@ caustests <- function(data, test, pmax = 8, ic = 1, nboot = 1000,
     dmax = dmax,
     quantiles = if (test %in% 6:7) quantiles else NULL,
     quantile_results = quantile_results,
+    quantreg_warnings = quantreg_warnings,
     n_obs = n_obs,
     variables = vnames
   )
@@ -236,6 +246,14 @@ print.caustests <- function(x, ...) {
     .print_ols_results(x$results, x$test)
   } else {
     .print_quantile_results(x$results, x$quantile_results, x$quantiles, x$test)
+    if (!is.null(x$quantreg_warnings) && any(x$quantreg_warnings$n_warnings > 0)) {
+      fl <- x$quantreg_warnings
+      cat(sprintf(paste0("Note: quantreg reported non-positive fis in %d of %d ",
+                         "quantile regression fits (%d of %d direction-quantile ",
+                         "pairs); see $quantreg_warnings\n\n"),
+                  sum(fl$n_warnings), sum(fl$n_fits),
+                  sum(fl$n_warnings > 0), nrow(fl)))
+    }
   }
   
   invisible(x)
@@ -330,6 +348,7 @@ summary.caustests <- function(object, ...) {
   nvar <- ncol(data)
   results <- list()
   quantile_details <- list()
+  fis_log <- list()
   
   for (dep_idx in 1:nvar) {
     depvar <- data[, dep_idx]
@@ -366,6 +385,7 @@ summary.caustests <- function(object, ...) {
         stringsAsFactors = FALSE
       )
       
+      n_fis <- integer(length(quantiles))
       for (q_idx in seq_along(quantiles)) {
         tau <- quantiles[q_idx]
         qtest <- .quantile_wald_boot(y_combined, p_opt, k_opt, dmax, tau, 
@@ -373,9 +393,17 @@ summary.caustests <- function(object, ...) {
         q_results$wald[q_idx] <- qtest$wald
         q_results$pval_boot[q_idx] <- qtest$pval_boot
         q_results$sig[q_idx] <- .sig_stars(qtest$pval_boot)
+        n_fis[q_idx] <- qtest$n_fis_warnings
       }
       
       quantile_details[[direction]] <- q_results
+      fis_log[[direction]] <- data.frame(
+        direction = direction,
+        quantile = quantiles,
+        n_warnings = n_fis,
+        n_fits = nboot + 1L,
+        stringsAsFactors = FALSE
+      )
       
       # Summary: count significant quantiles
       n_sig_01 <- sum(q_results$pval_boot < 0.01, na.rm = TRUE)
@@ -397,7 +425,35 @@ summary.caustests <- function(object, ...) {
   
   out <- do.call(rbind, results)
   attr(out, "quantile_details") <- quantile_details
+  fis_log <- do.call(rbind, fis_log)
+  rownames(fis_log) <- NULL
+  attr(out, "quantreg_warnings") <- fis_log
+  .warn_quantreg_fis(fis_log)
   out
+}
+
+
+# Internal: Report the muffled quantreg sparsity warnings once
+.warn_quantreg_fis <- function(fis_log) {
+  if (is.null(fis_log) || !any(fis_log$n_warnings > 0)) return(invisible(NULL))
+  parts <- character()
+  for (direction in unique(fis_log$direction)) {
+    fl <- fis_log[fis_log$direction == direction, , drop = FALSE]
+    hit <- fl$n_warnings > 0
+    if (!any(hit)) next
+    parts <- c(parts, sprintf(
+      "%s: %d of %d quantiles (tau = %s; %d of %d quantile regression fits)",
+      direction, sum(hit), nrow(fl),
+      paste(format(fl$quantile[hit]), collapse = ", "),
+      sum(fl$n_warnings), sum(fl$n_fits)))
+  }
+  warning(sprintf(paste0(
+    "quantreg reported non-positive fis (sparsity estimate) in ",
+    "summary.rq(se = \"nid\") for %s. The corresponding standard errors, and ",
+    "hence the Wald statistics, may be unreliable at these quantiles. ",
+    "Details are in the 'quantreg_warnings' element of the result."),
+    paste(parts, collapse = "; ")), call. = FALSE)
+  invisible(NULL)
 }
 
 
@@ -661,7 +717,33 @@ summary.caustests <- function(object, ...) {
 
 
 # Internal: Quantile Wald with bootstrap
+#
+# quantreg::summary.rq(se = "nid") warns "k non-positive fis" whenever the
+# estimated quantile functions at tau +/- h cross at some observations. The
+# function is called once for the observed sample and once per bootstrap
+# replication, so the same warning could be repeated nboot + 1 times per
+# quantile. These warnings (and only these) are counted here and muffled; the
+# caller reports them once. No other warning is touched and no computation
+# is changed: quantreg itself continues after the warning (pmax(0, .)).
 .quantile_wald_boot <- function(y, p_opt, k_opt, dmax, tau, nboot, test) {
+  n_fis <- 0L
+  res <- withCallingHandlers(
+    .quantile_wald_boot_core(y, p_opt, k_opt, dmax, tau, nboot, test),
+    warning = function(w) {
+      if (grepl("non-positive fis", conditionMessage(w), fixed = TRUE)) {
+        n_fis <<- n_fis + 1L
+        invokeRestart("muffleWarning")
+      }
+    }
+  )
+  res$n_fis_warnings <- n_fis
+  res$n_fits <- nboot + 1L
+  res
+}
+
+
+# Internal: Quantile Wald with bootstrap (computation)
+.quantile_wald_boot_core <- function(y, p_opt, k_opt, dmax, tau, nboot, test) {
   if (!requireNamespace("quantreg", quietly = TRUE)) {
     stop("Package 'quantreg' is required for quantile tests")
   }

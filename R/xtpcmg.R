@@ -1,7 +1,7 @@
 #' Panel Cointegrating Polynomial Regressions via FM-OLS
 #'
 #' Estimates a polynomial cointegrating regression in a panel using either
-#' Group-Mean FM-OLS (Wagner & Reichold 2023) or Pooled FM-OLS (de Jong &
+#' Group-Mean FM-OLS (Wagner and Reichold 2023) or Pooled FM-OLS (de Jong &
 #' Wagner 2022). Models the long-run relationship:
 #'
 #' \deqn{y_{it} = \alpha_i + \beta_1 x_{it} + \beta_2 x_{it}^2 [+ \beta_3 x_{it}^3]

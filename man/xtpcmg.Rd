@@ -78,7 +78,7 @@ An object of class \code{"xtpcmg"} with elements:
 }
 \description{
 Estimates a polynomial cointegrating regression in a panel using either
-Group-Mean FM-OLS (Wagner & Reichold 2023) or Pooled FM-OLS (de Jong &
+Group-Mean FM-OLS (Wagner and Reichold 2023) or Pooled FM-OLS (de Jong &
 Wagner 2022). Models the long-run relationship:
 }
 \details{

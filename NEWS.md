@@ -1,3 +1,9 @@
+# caustests 1.1.5
+
+* Tests 6 and 7 (quantile causality): `quantreg::summary.rq(se = "nid")` warns "k non-positive fis" when the sparsity estimate is non-positive at some observations. The package called it once for the observed sample and once per bootstrap replication at every quantile, so the same warning was repeated up to (nboot + 1) times per quantile and direction (for example 965 times for test 7 on `caustests_data` with 5 quantiles and `nboot = 99`), which users mistook for an error. These warnings are now counted inside the loops and reported once per call, with the directions, quantiles and number of fits affected. Other warnings are not suppressed.
+* New element `quantreg_warnings` in the returned object (tests 6-7): a data frame with the number of affected quantile regression fits per direction and quantile. `print()` adds one line when any occurred.
+* No numerical results change: Wald statistics and bootstrap p-values are identical to version 1.1.4 for the same seed.
+
 # caustests 1.1.4
 
 * `xtpcmg()`: the one-sided long-run covariance used in the fully modified bias correction was transposed (it estimated the sum of E(u_t v_{t+j}) instead of E(v_t u_{t+j})), and the quadratic spectral and Daniell kernels did not use the one-sided weights of the authors' code; group-mean and pooled FM-OLS estimates were therefore biased. The long-run covariance now follows the authors' lr_varmod.m.
@@ -23,9 +29,9 @@
 
 * Implemented 7 Granger causality tests:
   - Test 1: Toda-Yamamoto (1995)
-  - Test 2: Single Fourier Granger (Enders & Jones, 2016)
+  - Test 2: Single Fourier Granger (Enders and Jones, 2016)
   - Test 3: Single Fourier Toda-Yamamoto (Nazlioglu et al., 2016)
-  - Test 4: Cumulative Fourier Granger (Enders & Jones, 2019)
+  - Test 4: Cumulative Fourier Granger (Enders and Jones, 2019)
   - Test 5: Cumulative Fourier Toda-Yamamoto (Nazlioglu et al., 2019)
   - Test 6: Quantile Toda-Yamamoto (Cai et al., 2023)
   - Test 7: Bootstrap Fourier Granger Causality in Quantiles (Cheng et al., 2021)
