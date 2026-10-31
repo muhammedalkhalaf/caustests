@@ -1,4 +1,5 @@
-^paper\.tex$
-^paper\.md$
-^paper\.bib$
 ^cran-comments\.md$
+^\.git$
+^.*\.Rproj$
+^\.Rproj\.user$
+^FIX_SUMMARY\.md$

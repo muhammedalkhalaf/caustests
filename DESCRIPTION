@@ -1,8 +1,8 @@
 Package: caustests
 Type: Package
 Title: Multiple Granger Causality Tests for Time Series and Panel Data
-Version: 1.1.5
-Date: 2026-10-03
+Version: 1.1.7
+Date: 2026-10-30
 Authors@R: c(
     person("Muhammad", "Alkhalaf", 
            email = "muhammedalkhalaf@gmail.com",
@@ -30,10 +30,11 @@ BugReports: https://github.com/muhammedalkhalaf/caustests/issues
 Encoding: UTF-8
 LazyData: true
 Depends: R (>= 3.5.0)
-Imports:
-    stats,
-    quantreg
-Suggests:
-    testthat (>= 3.0.0)
+Imports: stats, quantreg
+Suggests: testthat (>= 3.0.0)
 Config/testthat/edition: 3
 RoxygenNote: 7.3.3
+NeedsCompilation: no
+Author: Muhammad Alkhalaf [aut, cre, cph]
+    (<https://orcid.org/0009-0002-2677-9246>)
+Maintainer: Muhammad Alkhalaf <muhammedalkhalaf@gmail.com>

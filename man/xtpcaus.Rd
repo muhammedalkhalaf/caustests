@@ -34,16 +34,18 @@ xtpcaus(
 \item{test}{Character. Test type: \code{"pfty"} for Panel Fourier
 Toda-Yamamoto or \code{"pqc"} for Panel Quantile Causality.}
 
-\item{pmax}{Integer. Maximum lag order for selection. Default is \code{4}.}
+\item{pmax}{Integer. Maximum lag order for selection. Default is \code{4}.
+Lag orders that leave fewer than 5 residual degrees of freedom are not
+considered (see Details).}
 
 \item{dmax}{Integer. Maximum integration order for Toda-Yamamoto
-augmentation. Default is \code{1}.}
+augmentation. Default is \code{1}. \code{0} omits the augmentation.}
 
 \item{nboot}{Integer. Number of bootstrap replications. Minimum 99.
 Default is \code{499}.}
 
 \item{kmax}{Integer. Maximum Fourier frequency (PFTY only). Default is
-\code{3}.}
+\code{3}. \code{0} omits the Fourier terms.}
 
 \item{ic}{Character. Information criterion: \code{"aic"} or \code{"bic"}.
 Default is \code{"aic"}.}
@@ -53,7 +55,7 @@ between 0 and 1). Default is
 \code{c(0.1, 0.25, 0.50, 0.75, 0.90)}.}
 
 \item{seed}{Integer. Random seed for bootstrap. \code{-1} means no seed.
-Default is \code{-1}.}
+Default is \code{-1}. The global RNG state is restored on exit.}
 }
 \value{
 An object of class \code{"xtpcaus"} containing:
@@ -65,24 +67,55 @@ An object of class \code{"xtpcaus"} containing:
   \item{y}{Character. Name of the y variable.}
   \item{x}{Character. Name of the x variable.}
   For PFTY:
-  \item{fisher}{Numeric. Fisher panel statistic.}
-  \item{fisher_df}{Integer. Degrees of freedom (2*N).}
+  \item{fisher}{Numeric. Fisher panel statistic, \code{-2 sum log p_i}
+    over the bootstrap p-values of the units that enter the panel
+    statistics.}
+  \item{fisher_df}{Integer. Degrees of freedom (2 N_used).}
   \item{fisher_pv}{Numeric. Fisher p-value.}
-  \item{wbar}{Numeric. Average individual Wald statistic.}
-  \item{zbar}{Numeric. Dumitrescu-Hurlin Z-bar statistic.}
-  \item{zbar_pv}{Numeric. Z-bar p-value.}
-  \item{ind_wald}{Numeric vector. Individual Wald statistics (length N).}
-  \item{ind_freq}{Integer vector. Optimal Fourier frequencies (length N).}
+  \item{N_used}{Integer. Number of units entering the panel statistics
+    (units with a singular regression are excluded).}
+  \item{wbar}{Numeric. Average individual Wald statistic (variance
+    normalisation \code{RSS / n}).}
+  \item{wbar_dh}{Numeric. Average individual Wald statistic with the
+    unbiased variance \code{RSS / (T_i - 2 K_i - 1)} (Dumitrescu and
+    Hurlin 2012, eq. 4). \code{NA} unless \code{kmax = 0} and
+    \code{dmax = 0}.}
+  \item{zbar}{Numeric. Dumitrescu and Hurlin (2012) Z-bar statistic,
+    eq. (9), with asymptotic moments. \code{NA} unless \code{kmax = 0}
+    and \code{dmax = 0}.}
+  \item{zbar_pv}{Numeric. One-sided (upper tail) asymptotic p-value of
+    \code{zbar}.}
+  \item{ztilde}{Numeric. Dumitrescu and Hurlin (2012) Z-tilde statistic,
+    eq. (26), with the fixed-T moments of eq. (21) and (22). \code{NA}
+    unless \code{kmax = 0} and \code{dmax = 0}.}
+  \item{ztilde_pv}{Numeric. One-sided (upper tail) asymptotic p-value of
+    \code{ztilde}.}
+  \item{ztilde_boot_pv}{Numeric. One-sided bootstrap p-value of
+    \code{ztilde} from the cross-sectional block bootstrap. \code{NA}
+    unless \code{kmax = 0} and \code{dmax = 0}.}
+  \item{ind_wald}{Numeric vector. Individual Wald statistics (length N;
+    \code{NA} for a unit with a singular regression).}
+  \item{ind_wald_dh}{Numeric vector. Individual Wald statistics with the
+    unbiased variance (length N). \code{NA} unless \code{kmax = 0} and
+    \code{dmax = 0}.}
+  \item{ind_pval_a}{Numeric vector. Asymptotic chi-squared p-values of the
+    individual Wald statistics (\code{ind_wald}) with \code{ind_lags}
+    degrees of freedom (length N). Not used for the panel statistics; the
+    bootstrap p-values are the basis of inference.}
+  \item{ind_freq}{Integer vector. Selected Fourier frequencies (length N;
+    0 when \code{kmax = 0}).}
   \item{ind_pval_b}{Numeric vector. Bootstrap p-values (length N).}
   \item{ind_lags}{Integer vector. Selected lag orders (length N).}
+  \item{ind_df}{Integer vector. Residual degrees of freedom of the
+    unrestricted regressions (length N).}
   For PQC:
   \item{quantiles}{Numeric vector. Quantiles tested.}
-  \item{wald_xy}{Numeric vector. Wald statistics per quantile (x => y).}
-  \item{pval_xy}{Numeric vector. Bootstrap p-values per quantile (x => y).}
-  \item{wald_yx}{Numeric vector. Wald statistics per quantile (y => x).}
-  \item{pval_yx}{Numeric vector. Bootstrap p-values per quantile (y => x).}
-  \item{supwald_xy}{Numeric. Sup-Wald statistic for x => y.}
-  \item{supwald_yx}{Numeric. Sup-Wald statistic for y => x.}
+  \item{wald_xy}{Numeric vector. Wald statistics per quantile (x to y).}
+  \item{pval_xy}{Numeric vector. Bootstrap p-values per quantile (x to y).}
+  \item{wald_yx}{Numeric vector. Wald statistics per quantile (y to x).}
+  \item{pval_yx}{Numeric vector. Bootstrap p-values per quantile (y to x).}
+  \item{supwald_xy}{Numeric. Sup-Wald statistic for x to y.}
+  \item{supwald_yx}{Numeric. Sup-Wald statistic for y to x.}
   \item{p_opt}{Integer. Selected optimal lag.}
 }
 }
@@ -90,6 +123,99 @@ An object of class \code{"xtpcaus"} containing:
 Tests whether \code{x} Granger-causes \code{y} in a balanced panel using
 either the Panel Fourier Toda-Yamamoto (PFTY) test or the Panel Quantile
 Causality (PQC) test.
+}
+\details{
+\strong{PFTY specification.} For each unit \code{i} the test regression is
+\deqn{y_t = a + \sum_{k=1}^{p_i + dmax} g_k y_{t-k} + \sum_{k=1}^{p_i + dmax}
+b_k x_{t-k} + c_1 \sin(2 \pi f_i t / T) + c_2 \cos(2 \pi f_i t / T) + e_t,}
+with \code{p_i} in \code{1..pmax} and \code{f_i} in \code{1..kmax} chosen
+jointly by the information criterion. The null hypothesis restricts the
+first \code{p_i} lags of \code{x}. The individual Wald statistic uses the
+residual variance \code{RSS / n} with \code{n = T - p_i - dmax} the
+effective sample (the normalisation of the Stata command caustests).
+\code{kmax = 0} omits the Fourier terms; \code{dmax = 0} omits the
+Toda-Yamamoto augmentation. With \code{kmax = 0} and \code{dmax = 0} the
+regression is the plain VAR(p) of Dumitrescu and Hurlin (2012, eq. 1) with
+a unit-specific lag order \code{K_i = p_i}.
+
+\strong{Degrees of freedom.} A lag order \code{p} is admissible only when
+the unrestricted regression keeps at least 5 residual degrees of freedom,
+\code{T - (p + dmax) - k >= 5} with \code{k = 2 (p + dmax) + 1 + 2 I(kmax > 0)}
+regressors. Lag orders that violate this bound are not considered (a
+warning says so); if no lag order is admissible the function stops. This
+bound implies the condition \code{T_i > 5 + 2 K_i} of Dumitrescu and Hurlin
+(2012, eq. 10) for the existence of the second moments of the Wald
+statistic.
+
+\strong{Dumitrescu and Hurlin (2012) statistics.} Only for the plain
+specification (\code{kmax = 0} and \code{dmax = 0}) the function reports the
+standardised statistics of Dumitrescu and Hurlin (2012). They are built
+from the individual Wald statistics with the unbiased residual variance
+\code{RSS / (T_i - 2 K_i - 1)} (the paper's main definition), where
+\code{T_i = T - p_i} is the effective sample of unit \code{i}:
+\code{Z-bar} is eq. (9) with the asymptotic moments \code{K_i} and
+\code{2 K_i}, and \code{Z-tilde} is eq. (26) with the fixed-T moments of
+eq. (21) and (22),
+\deqn{E(W_i) = K_i (T_i - 2 K_i - 1) / (T_i - 2 K_i - 3),}
+\deqn{Var(W_i) = 2 K_i (T_i - 2 K_i - 1)^2 (T_i - K_i - 3) /
+((T_i - 2 K_i - 3)^2 (T_i - 2 K_i - 5)).}
+When the selected lag orders differ across units the moments are averaged
+over units: Z-bar uses the averaged asymptotic moments of eq. (11) of the
+paper (mean of K_i and of 2K_i), Z-tilde the averaged fixed-T moments of
+eq. (33). Both p-values are one-sided (upper
+tail), the decision rule of the paper. \code{Z-tilde} is the statistic to
+use at fixed T; \code{Z-bar} requires T to grow before N and is oversized
+in short panels (the paper's Table 1). For the Fourier or Toda-Yamamoto
+augmented specification the Wald statistics come from a different
+regression with a data-selected frequency, the moments of eq. (21) and (22)
+do not apply, and \code{zbar}, \code{ztilde} and their p-values are
+\code{NA}; inference then rests on the bootstrap Fisher p-value.
+
+\strong{Bootstrap.} The bootstrap is a residual bootstrap under the null
+built on Dumitrescu and Hurlin (2012, Section 6.2, steps 3 to 7). For
+each unit the model is re-estimated without the tested lags of \code{x}
+(restricted model) and its residuals are kept. In each replication a
+sequence of time indices is drawn with replacement from the periods common
+to all units and the same sequence is used for every unit (block of size 1
+in time and size N in the cross-section), so that cross-sectional
+dependence of the residuals is preserved. A bootstrap series is generated
+recursively from the restricted model (intercept, autoregressive part,
+unrestricted lags of \code{x}, Fourier terms, resampled residuals; the
+observed first \code{p_i + dmax} values are the initial conditions), and
+the whole procedure, selection of the lag order and frequency included, is
+repeated on it. The paper's step 5 holds the lagged values of \code{y}
+fixed; the recursive construction is used here so that the selection step
+can be repeated, since the selection on the observed data inflates the
+Wald statistics in short panels. When there is a single candidate
+(\code{pmax = 1} and \code{kmax <= 1}) the selection is skipped. The
+individual bootstrap p-values are combined by the Fisher statistic of
+Emirmahmutoglu and Kose (2011), \code{-2 sum log p_i} on \code{2 N}
+degrees of freedom. For the plain specification the bootstrap
+distribution of \code{Z-tilde} is also recorded and \code{ztilde_boot_pv}
+is the one-sided bootstrap p-value. Bootstrap regressions that are
+singular or non-finite are dropped with a warning giving their number.
+In Monte Carlo experiments under the null with N = 10, pmax = 1, dmax = 1,
+kmax = 3 and nominal size 5 percent, the bootstrap Fisher test rejected
+about 12 percent at T = 20 and 9 percent at T = 50 (independent normal
+errors), while the plain specification was at nominal size; the
+selection of the Fourier frequency on short panels is absorbed only in
+part. For the Dumitrescu and Hurlin statistics use the plain
+specification.
+
+\strong{Singular regressions.} If the regressor matrix of a unit is
+singular for every admissible lag order (for example \code{x} constant or
+identical to \code{y}), its Wald statistic is \code{NA}, a warning names
+the unit and the unit is excluded from the panel statistics; \code{N_used}
+gives the number of units that enter them.
+
+\strong{Input checks.} Missing values in \code{y}, \code{x},
+\code{panel_id} or \code{time_id} stop the function with the count and the
+row positions. Every unit must be observed at the same set of time values
+exactly once; duplicated or misaligned rows stop the function.
+
+\strong{Random numbers.} When \code{seed >= 0} the bootstrap uses that
+seed in a local RNG scope: the state of the global random number generator
+is saved before and restored after the call.
 }
 \examples{
 dat <- grunfeld_panel()
@@ -100,6 +226,14 @@ res <- xtpcaus(dat, y = "invest", x = "mvalue",
                test = "pfty", pmax = 2L, dmax = 1L,
                nboot = 99L, kmax = 2L, seed = 42L)
 print(res)
+
+# Plain VAR(p) specification with the Dumitrescu and Hurlin (2012)
+# Z-bar and Z-tilde statistics
+res_dh <- xtpcaus(dat, y = "invest", x = "mvalue",
+                  panel_id = "firm", time_id = "year",
+                  test = "pfty", pmax = 2L, dmax = 0L,
+                  nboot = 99L, kmax = 0L, seed = 42L)
+print(res_dh)
 }
 
 # PQC test
@@ -117,6 +251,11 @@ Chuang, C.C., Kuan, C.M. and Lin, H.Y. (2009).
 Causality in quantiles and dynamic stock return-volume relations.
 \emph{Journal of Banking and Finance}, 33(7), 1351--1360.
 \doi{10.1016/j.jbankfin.2009.02.013}
+
+Dumitrescu, E.I. and Hurlin, C. (2012).
+Testing for Granger non-causality in heterogeneous panels.
+\emph{Economic Modelling}, 29(4), 1450--1460.
+\doi{10.1016/j.econmod.2012.02.014}
 
 Emirmahmutoglu, F. and Kose, N. (2011).
 Testing for Granger causality in heterogeneous mixed panels.

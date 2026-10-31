@@ -21,7 +21,7 @@
 #' }
 #'
 #' This allows users to verify that the causality tests correctly identify
-#' the causal direction X1 => Y while finding no significant causality
+#' the causal direction X1 to Y while finding no significant causality
 #' in other directions (with appropriate sample sizes and test settings).
 #'
 #' @examples

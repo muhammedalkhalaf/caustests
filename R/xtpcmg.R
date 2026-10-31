@@ -688,8 +688,8 @@ xtpcmg <- function(data, y, x, panel_id, time_id,
 #' @return Invisibly returns \code{x}.
 #' @export
 print.xtpcmg <- function(x, ...) {
-  model_lab <- if (x$model == "mg") "Group-Mean FM-OLS (Wagner & Reichold 2023)" else
-                 "Pooled FM-OLS (de Jong & Wagner 2022)"
+  model_lab <- if (x$model == "mg") "Group-Mean FM-OLS (Wagner and Reichold 2023)" else
+                 "Pooled FM-OLS (de Jong and Wagner 2022)"
   message(strrep("-", 65))
   message(sprintf("Panel Cointegrating Polynomial Regression: %s", model_lab))
   message(sprintf("Dep: %s | Poly: %s (degree %d) | N=%d, T=%d",

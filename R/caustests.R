@@ -174,9 +174,9 @@ caustests <- function(data, test, pmax = 8, ic = 1, nboot = 1000,
   # Test names
   test_names <- c(
     "Toda-Yamamoto (1995)",
-    "Single Fourier Granger (Enders & Jones, 2016)",
+    "Single Fourier Granger (Enders and Jones, 2016)",
     "Single Fourier Toda-Yamamoto (Nazlioglu et al., 2016)",
-    "Cumulative Fourier Granger (Enders & Jones, 2019)",
+    "Cumulative Fourier Granger (Enders and Jones, 2019)",
     "Cumulative Fourier Toda-Yamamoto (Nazlioglu et al., 2019)",
     "Quantile Toda-Yamamoto (Cai et al., 2023)",
     "Bootstrap Fourier Granger Causality in Quantiles (Cheng et al., 2021)"

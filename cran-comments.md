@@ -1,15 +1,28 @@
-## caustests 1.1.5
+## caustests 1.1.7
 
-This release changes how a quantreg warning is reported; no numerical results change. The version on CRAN is 1.1.4.
+CRAN version: 1.1.6.
 
-* Tests 6 and 7 (quantile causality): `quantreg::summary.rq(se = "nid")` warns "k non-positive fis" when the sparsity estimate is non-positive at some observations. The package called it once for the observed sample and once per bootstrap replication at every quantile, so the same warning was repeated up to (nboot + 1) times per quantile and direction (for example 965 times for test 7 on `caustests_data` with 5 quantiles and `nboot = 99`), which users mistook for an error. These warnings are now counted inside the loops and reported once per call, with the directions, quantiles and number of fits affected. Other warnings are not suppressed.
-* New element `quantreg_warnings` in the returned object (tests 6-7): a data frame with the number of affected quantile regression fits per direction and quantile. `print()` adds one line when any occurred.
-* No numerical results change: Wald statistics and bootstrap p-values are identical to version 1.1.4 for the same seed.
+### Changes
 
-## Test environments
+* xtpcaus(test = "pfty"): lag orders leaving fewer than 5 residual degrees of freedom are excluded (warning), error when none is admissible.
+* xtpcaus(test = "pfty"): Dumitrescu and Hurlin (2012) Z-bar (eq. 9) and Z-tilde (eq. 26, moments of eq. 21 and 22) with one-sided p-values, reported for the plain VAR(p) specification (kmax = 0, dmax = 0) only; NA for the Fourier or Toda-Yamamoto augmented specification.
+* xtpcaus(test = "pfty"): bootstrap resamples restricted-model residuals with the same time indices for all units, regenerates the series recursively and repeats the lag and frequency selection; bootstrap p-value of Z-tilde added.
+* xtpcaus(test = "pfty"): singular unit regressions give NA with a warning and are excluded from the panel statistics.
+* xtpcaus(): missing values and duplicated or misaligned (panel_id, time_id) rows stop with an informative error.
+* xtpcaus(): seed applied in a local RNG scope; the global .Random.seed is restored.
+* kmax = 0 and dmax = 0 accepted by xtpcaus().
+* Printed labels: "to" instead of the arrow symbol, "and" instead of the ampersand between author names.
+* Reference to Dumitrescu and Hurlin (2012) added; Details section added to ?xtpcaus.
+* New tests (tests/testthat/test-xtpcaus-dh.R); validation ledger in inst/validation.
 
-* Ubuntu 24.04, R 4.3.3 and R-devel, R CMD check --as-cran
+### Test environments
 
-## R CMD check results
+* Linux (x86_64), R 4.3.3. R-devel was not available in the build environment; the package was checked on R 4.3.3 only.
 
-0 errors | 0 warnings | 0 notes
+### R CMD check results
+
+R CMD check --as-cran --no-manual (R 4.3.3, _R_CHECK_SYSTEM_CLOCK_=0): 0 errors, 0 warnings, 1 NOTE.
+
+* NOTE (environment): checking CRAN incoming feasibility reports the URL https://github.com/muhammedalkhalaf/caustests as "Status: 403 Forbidden". The check ran behind a proxy that blocks the request; the repository is public.
+
+Examples run with --run-donttest (28 s). Tests: tests/testthat (all pass).
